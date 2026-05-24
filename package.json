@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "scrape": "tsx scripts/scrape.ts",
+    "deploy:vercel": "node scripts/deploy-vercel.mjs",
     "postinstall": "playwright install chromium || true"
   },
   "dependencies": {
@@ -16,6 +17,7 @@
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.1",
     "@tanstack/react-query": "^5.100.14",
+    "@vercel/sdk": "^1.21.7",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.3.0",
