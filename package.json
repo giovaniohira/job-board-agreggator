@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "scrape": "tsx scripts/scrape.ts",
     "deploy:vercel": "node scripts/deploy-vercel.mjs",
     "postinstall": "playwright install chromium || true"
@@ -40,6 +42,7 @@
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",
     "tsx": "^4.22.3",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.7"
   }
 }
