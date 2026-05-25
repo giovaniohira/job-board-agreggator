@@ -1,18 +1,30 @@
 # JobPulse
 
+[![CI](https://github.com/giovaniohira/job-board-agreggator/actions/workflows/ci.yml/badge.svg)](https://github.com/giovaniohira/job-board-agreggator/actions/workflows/ci.yml)
+
 Private job aggregator for a single user. Scrapes junior and mid-level **remote** software roles in the **United States, Canada, and Brazil** from LinkedIn, Indeed, and Glassdoor, deduplicates them, and surfaces everything in a focused dashboard.
 
-**Live:** [job-board-pulse.vercel.app](https://job-board-pulse.vercel.app)
+**Live:** [job-board-pulse.vercel.app](https://job-board-pulse.vercel.app) · **Landing:** [job-board-pulse.vercel.app](https://job-board-pulse.vercel.app/) · **Repo:** [github.com/giovaniohira/job-board-agreggator](https://github.com/giovaniohira/job-board-agreggator)
+
+![JobPulse landing page and dashboard preview](./docs/preview.png)
 
 ---
 
+## Portfolio pitch
+
+> JobPulse automates daily ingestion of remote junior/mid engineering roles across US, CA, and BR. Playwright scrapers run on Vercel Cron, results are normalized and deduplicated in Supabase, and a private Next.js dashboard tracks saved and applied jobs.
+
+**Impact:** replaces manual browsing across three job boards with one filtered feed and scrape telemetry.
+
 ## Highlights
 
+- Public landing page with architecture story for recruiters
 - Single-user auth (Supabase) with email allowlist
 - Daily automated scrape via Vercel Cron (9:00 AM BRT)
 - Playwright scrapers with serverless-safe Chromium on Vercel
 - Hash-based deduplication and scrape run logging
-- Dashboard filters: source, remote type, seniority, country, stack
+- Dashboard stats strip + filters (source, remote, seniority, country, stack)
+- CI: lint, unit tests, and production build on every push
 
 ## Stack
 
@@ -25,6 +37,7 @@ Private job aggregator for a single user. Scrapes junior and mid-level **remote*
 | Scraping | Playwright + `@sparticuz/chromium` |
 | Hosting | Vercel (Cron Jobs, serverless functions) |
 | Client data | TanStack Query |
+| Testing | Vitest |
 
 ## Architecture
 
@@ -44,7 +57,14 @@ flowchart LR
   DB --> Dashboard[Dashboard UI]
 ```
 
-Scrape results flow through a shared pipeline filter before persistence. Only jobs that are **remote** and tied to **US, Canada, or Brazil** are kept.
+## Technical decisions
+
+| Decision | Why |
+| --- | --- |
+| **Supabase RPC for cron writes** | Avoids storing a service role key on Vercel while still allowing secure upserts |
+| **`@sparticuz/chromium` + file tracing** | Playwright needs `browsers.json` at runtime; explicit tracing fixes serverless crashes |
+| **Pipeline filter before upsert** | Keeps only remote roles in US/CA/BR — business rules enforced at ingestion, not just UI |
+| **Hash dedup** | Stable identity across sources without relying on external IDs that change per board |
 
 ## Scraping rules
 
@@ -103,7 +123,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) — you'll be redirected to login, then the dashboard.
+Open [http://localhost:3000](http://localhost:3000) for the public landing page, or sign in at `/login`.
 
 ### 5. Manual scrape
 
@@ -117,12 +137,22 @@ Or call the cron route:
 curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/scrape
 ```
 
+### 6. Tests & CI
+
+```bash
+npm run test
+npm run lint
+npm run build
+```
+
+GitHub Actions runs the same checks on every push to `master`.
+
 ## Deployment (Vercel)
 
-1. Import the GitHub repo in Vercel
+1. Import the GitHub repo in Vercel (Git-connected deploys recommended)
 2. Set all env vars from `.env.example` (use `--value` when adding `CRON_SECRET` to avoid trailing whitespace)
 3. Deploy — `postinstall` installs Playwright Chromium on the build machine
-4. Cron schedule lives in `vercel.json`:
+4. Cron schedule in `vercel.json`:
 
 ```json
 {
@@ -130,9 +160,7 @@ curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/scra
 }
 ```
 
-That runs **once per day at 12:00 UTC (9:00 AM Brazil time)**. Vercel Hobby allows one cron job per project.
-
-The scrape route sets `maxDuration = 300` and bundles Playwright assets via `outputFileTracingIncludes` in `next.config.ts`.
+Runs **once per day at 12:00 UTC (9:00 AM Brazil time)**.
 
 ## Project structure
 
@@ -144,13 +172,15 @@ src/
 │   ├── api/jobs/
 │   ├── dashboard/
 │   └── login/
-├── components/        # Dashboard UI + shadcn-style primitives
+├── components/        # Landing, dashboard UI, shadcn-style primitives
 ├── lib/               # Supabase clients, env, hashing, types
 ├── repositories/      # Jobs + scraping runs data access
 ├── scrapers/          # Playwright scrapers + pipeline filters
 └── services/          # Scraping orchestration
 supabase/migrations/   # Schema + cron RPC functions
 scripts/               # Manual scrape + deploy helpers
+.github/workflows/     # CI pipeline
+docs/                  # README assets
 ```
 
 ## Scripts
@@ -161,6 +191,7 @@ scripts/               # Manual scrape + deploy helpers
 | `npm run build` | Production build |
 | `npm run start` | Start production server |
 | `npm run scrape` | Run all scrapers manually |
+| `npm run test` | Run unit tests (Vitest) |
 | `npm run lint` | ESLint |
 | `npm run deploy:vercel` | Vercel SDK deploy helper |
 
@@ -175,4 +206,4 @@ scripts/               # Manual scrape + deploy helpers
 
 ## License
 
-Private MVP — not for public redistribution.
+Public portfolio project — source available for review; live dashboard remains private.
