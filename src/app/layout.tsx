@@ -16,11 +16,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "JobPulse — Remote Job Aggregator",
   description:
-    "Private job aggregator with daily Playwright scraping, Supabase pipeline, and a Next.js dashboard for remote junior/mid software roles in the US, Canada, and Brazil.",
+    "Private dashboard for remote junior and mid-level software roles in the United States, Canada, and Brazil.",
   openGraph: {
     title: "JobPulse — Remote Job Aggregator",
     description:
-      "Automated remote job aggregation for junior and mid-level software engineering roles.",
+      "Remote engineering jobs, filtered and tracked in one private dashboard.",
     url: "https://job-board-pulse.vercel.app",
     siteName: "JobPulse",
     type: "website",

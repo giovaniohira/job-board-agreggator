@@ -1,9 +1,9 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  Database,
+  Bookmark,
+  Filter,
   Globe2,
-  Layers,
   Radar,
   Shield,
   Timer,
@@ -11,31 +11,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-
-const stack = [
-  "Next.js 16",
-  "React 19",
-  "TypeScript",
-  "Supabase",
-  "Playwright",
-  "Vercel Cron",
-  "TanStack Query",
-];
-
-const decisions = [
-  {
-    title: "RPC instead of service role on Vercel",
-    body: "Cron upserts run through Supabase RPC with a shared secret, avoiding a service role key in serverless env.",
-  },
-  {
-    title: "Serverless-safe Playwright",
-    body: "@sparticuz/chromium plus explicit file tracing bundles browsers.json so cron scrapers survive cold starts.",
-  },
-  {
-    title: "Pipeline filter before persistence",
-    body: "Only remote junior/mid roles in the US, Canada, and Brazil pass the scraper gate and dedup layer.",
-  },
-];
 
 const previewJobs = [
   {
@@ -67,25 +42,14 @@ export function LandingPage() {
             <p className="text-xs font-medium uppercase tracking-[0.18em] text-emerald-400/80">
               JobPulse
             </p>
-            <p className="text-sm text-zinc-400">Private job aggregation MVP</p>
+            <p className="text-sm text-zinc-400">Private job aggregation</p>
           </div>
-          <div className="flex items-center gap-2">
-            <Button asChild variant="outline" size="sm">
-              <a
-                href="https://github.com/giovaniohira/job-board-agreggator"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                GitHub
-              </a>
-            </Button>
-            <Button asChild size="sm">
-              <Link href="/login">
-                Open dashboard
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </Button>
-          </div>
+          <Button asChild size="sm">
+            <Link href="/login">
+              Open dashboard
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </Button>
         </div>
       </header>
 
@@ -98,30 +62,13 @@ export function LandingPage() {
                 Remote engineering jobs, scraped, filtered, and tracked in one place.
               </h1>
               <p className="max-w-xl text-base leading-7 text-zinc-400 md:text-lg">
-                JobPulse aggregates junior and mid-level remote software roles across
-                the United States, Canada, and Brazil from LinkedIn, Indeed, and
-                Glassdoor — with daily cron scraping, deduplication, and a private
-                dashboard.
+                JobPulse brings junior and mid-level remote software roles from the
+                United States, Canada, and Brazil into a single private dashboard —
+                updated daily, without repeating the same search across job boards.
               </p>
-              <div className="flex flex-wrap gap-2">
-                {stack.map((item) => (
-                  <Badge key={item} variant="outline">
-                    {item}
-                  </Badge>
-                ))}
-              </div>
               <div className="flex flex-wrap gap-3 pt-2">
                 <Button asChild size="lg">
                   <Link href="/login">Sign in to dashboard</Link>
-                </Button>
-                <Button asChild variant="outline" size="lg">
-                  <a
-                    href="https://job-board-pulse.vercel.app/login"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Live deployment
-                  </a>
                 </Button>
               </div>
             </div>
@@ -165,18 +112,18 @@ export function LandingPage() {
             {[
               {
                 icon: Radar,
-                title: "Automated ingestion",
-                body: "Daily Vercel Cron triggers Playwright scrapers and logs every run in Supabase.",
+                title: "Daily updates",
+                body: "Fresh remote listings collected every morning from LinkedIn, Indeed, and Glassdoor.",
               },
               {
-                icon: Layers,
-                title: "Normalized pipeline",
-                body: "Hash-based dedup, seniority heuristics, and country filters before jobs hit the database.",
+                icon: Filter,
+                title: "Filtered for you",
+                body: "Junior and mid-level roles only — remote, in the US, Canada, or Brazil.",
               },
               {
                 icon: Shield,
-                title: "Private by design",
-                body: "Single-user auth with email allowlist, RLS policies, and no public sign-ups.",
+                title: "Private workspace",
+                body: "Sign in to browse, save favorites, and track what you have already applied to.",
               },
             ].map(({ icon: Icon, title, body }) => (
               <Card key={title} className="border-zinc-800/80 bg-zinc-950/50">
@@ -194,60 +141,42 @@ export function LandingPage() {
 
         <section className="border-y border-zinc-800/80 bg-zinc-950/40">
           <div className="mx-auto max-w-6xl px-4 py-16 md:px-6">
-            <div className="mb-8 flex items-center gap-3">
-              <Database className="h-5 w-5 text-emerald-400" />
-              <h2 className="text-2xl font-semibold tracking-tight text-zinc-50">
-                Technical decisions
-              </h2>
-            </div>
-            <div className="grid gap-4 md:grid-cols-3">
-              {decisions.map((item) => (
-                <Card key={item.title} className="border-zinc-800/80">
-                  <CardContent className="space-y-2 p-5">
-                    <h3 className="font-medium text-zinc-100">{item.title}</h3>
-                    <p className="text-sm leading-6 text-zinc-400">{item.body}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="mx-auto max-w-6xl px-4 py-16 md:px-6">
-          <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-emerald-400">
-                <Globe2 className="h-4 w-4" />
-                <span className="text-sm font-medium">Markets covered</span>
+            <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-emerald-400">
+                  <Globe2 className="h-4 w-4" />
+                  <span className="text-sm font-medium">Markets covered</span>
+                </div>
+                <p className="max-w-2xl text-sm leading-6 text-zinc-400">
+                  Remote-only roles in the United States, Canada, and Brazil. Hybrid,
+                  on-site, and out-of-region listings never make it into your feed.
+                </p>
+                <div className="flex items-center gap-2 text-zinc-500">
+                  <Timer className="h-4 w-4" />
+                  <span className="text-sm">Updated daily at 9:00 AM Brazil time</span>
+                </div>
+                <div className="flex items-center gap-2 text-zinc-500">
+                  <Bookmark className="h-4 w-4" />
+                  <span className="text-sm">Save jobs and mark applications from the dashboard</span>
+                </div>
               </div>
-              <p className="max-w-2xl text-sm leading-6 text-zinc-400">
-                Remote-only roles in the United States, Canada, and Brazil. Hybrid,
-                on-site, and out-of-region listings are filtered out before persistence.
-              </p>
-              <div className="flex items-center gap-2 text-zinc-500">
-                <Timer className="h-4 w-4" />
-                <span className="text-sm">Daily scrape at 9:00 AM Brazil time</span>
-              </div>
+              <Button asChild size="lg">
+                <Link href="/login">
+                  Explore the dashboard
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
             </div>
-            <Button asChild size="lg">
-              <Link href="/login">
-                Explore the dashboard
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
           </div>
         </section>
       </main>
 
       <footer className="border-t border-zinc-800/80">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-8 text-sm text-zinc-500 md:flex-row md:items-center md:justify-between md:px-6">
-          <p>Built by Giovani O. Hira · Next.js + Supabase + Playwright on Vercel</p>
-          <a
-            href="https://github.com/giovaniohira/job-board-agreggator"
-            className="text-zinc-400 transition-colors hover:text-zinc-200"
-          >
-            View source on GitHub
-          </a>
+          <p>JobPulse · private job aggregator</p>
+          <Link href="/login" className="text-zinc-400 transition-colors hover:text-zinc-200">
+            Sign in
+          </Link>
         </div>
       </footer>
     </div>
