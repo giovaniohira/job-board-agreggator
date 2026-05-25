@@ -94,9 +94,6 @@ export function LandingPage() {
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.12),transparent_42%)]" />
           <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 md:grid-cols-[1.1fr_0.9fr] md:px-6 md:py-24">
             <div className="space-y-6">
-              <Badge variant="secondary" className="rounded-full px-3 py-1">
-                Production-grade portfolio project
-              </Badge>
               <h1 className="max-w-2xl text-4xl font-semibold tracking-tight text-zinc-50 md:text-5xl">
                 Remote engineering jobs, scraped, filtered, and tracked in one place.
               </h1>

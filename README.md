@@ -6,19 +6,13 @@ Private job aggregator for a single user. Scrapes junior and mid-level **remote*
 
 **Live:** [job-board-pulse.vercel.app](https://job-board-pulse.vercel.app) · **Landing:** [job-board-pulse.vercel.app](https://job-board-pulse.vercel.app/) · **Repo:** [github.com/giovaniohira/job-board-agreggator](https://github.com/giovaniohira/job-board-agreggator)
 
-![JobPulse landing page and dashboard preview](./docs/preview.png)
+![JobPulse landing page](./docs/preview.png)
 
 ---
 
-## Portfolio pitch
-
-> JobPulse automates daily ingestion of remote junior/mid engineering roles across US, CA, and BR. Playwright scrapers run on Vercel Cron, results are normalized and deduplicated in Supabase, and a private Next.js dashboard tracks saved and applied jobs.
-
-**Impact:** replaces manual browsing across three job boards with one filtered feed and scrape telemetry.
-
 ## Highlights
 
-- Public landing page with architecture story for recruiters
+- Public landing page with product overview and architecture
 - Single-user auth (Supabase) with email allowlist
 - Daily automated scrape via Vercel Cron (9:00 AM BRT)
 - Playwright scrapers with serverless-safe Chromium on Vercel
@@ -206,4 +200,4 @@ docs/                  # README assets
 
 ## License
 
-Public portfolio project — source available for review; live dashboard remains private.
+Open source — live dashboard access remains private.

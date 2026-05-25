@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "JobPulse — Remote Job Aggregator",
   description:
-    "Production-grade portfolio project: daily Playwright scraping, Supabase pipeline, and private Next.js dashboard for remote junior/mid software roles in the US, Canada, and Brazil.",
+    "Private job aggregator with daily Playwright scraping, Supabase pipeline, and a Next.js dashboard for remote junior/mid software roles in the US, Canada, and Brazil.",
   openGraph: {
     title: "JobPulse — Remote Job Aggregator",
     description:
