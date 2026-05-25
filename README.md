@@ -1,55 +1,87 @@
-# JobPulse — Private Job Aggregator MVP
+# JobPulse
 
-A full-stack job aggregation platform for a single private user. Aggregates junior and mid-level software engineering jobs from LinkedIn, Indeed, and Glassdoor with a focus on Brazil, remote worldwide, and English/Portuguese listings.
+Private job aggregator for a single user. Scrapes junior and mid-level **remote** software roles in the **United States, Canada, and Brazil** from LinkedIn, Indeed, and Glassdoor, deduplicates them, and surfaces everything in a focused dashboard.
 
-## Stack
-
-- **Next.js** (App Router) + TypeScript
-- **Tailwind CSS** + shadcn-style UI components
-- **Supabase** (Auth + Postgres)
-- **Playwright** scraping
-- **Vercel** deployment + Cron Jobs
-- **TanStack Query** for client data fetching
-- **Zod** for validation
-
-## Features
-
-- Private single-user authentication (Supabase Auth)
-- Dashboard with card/table hybrid job listings
-- Filters: source, remote type, seniority, country, stack keyword
-- Save/favorite, applied, and hide toggles
-- Pagination
-- Aggressive deduplication via normalized SHA-256 hashing
-- Twice-daily automated scraping (07:00 & 18:00 UTC)
+**Live:** [job-board-pulse.vercel.app](https://job-board-pulse.vercel.app)
 
 ---
 
-## Setup
+## Highlights
 
-### 1. Clone and install
+- Single-user auth (Supabase) with email allowlist
+- Daily automated scrape via Vercel Cron (9:00 AM BRT)
+- Playwright scrapers with serverless-safe Chromium on Vercel
+- Hash-based deduplication and scrape run logging
+- Dashboard filters: source, remote type, seniority, country, stack
+
+## Stack
+
+| Layer | Tech |
+| --- | --- |
+| Frontend | Next.js 16 (App Router), React 19, Tailwind CSS 4 |
+| Backend | Route handlers, Server Actions, Zod |
+| Database | Supabase Postgres + RLS |
+| Auth | Supabase Auth (SSR cookies) |
+| Scraping | Playwright + `@sparticuz/chromium` |
+| Hosting | Vercel (Cron Jobs, serverless functions) |
+| Client data | TanStack Query |
+
+## Architecture
+
+```mermaid
+flowchart LR
+  Cron[Vercel Cron] --> API["/api/cron/scrape"]
+  Manual["npm run scrape"] --> Service[ScrapingService]
+  API --> Service
+  Service --> LI[LinkedIn]
+  Service --> IN[Indeed]
+  Service --> GD[Glassdoor]
+  LI --> Filter[Remote + US/CA/BR filter]
+  IN --> Filter
+  GD --> Filter
+  Filter --> RPC[Supabase RPC upsert]
+  RPC --> DB[(jobs)]
+  DB --> Dashboard[Dashboard UI]
+```
+
+Scrape results flow through a shared pipeline filter before persistence. Only jobs that are **remote** and tied to **US, Canada, or Brazil** are kept.
+
+## Scraping rules
+
+**Keywords:** software engineer, backend, full stack, frontend, Node.js, React
+
+**Markets:** United States, Canada, Brazil — remote only
+
+**Seniority:** junior, mid, or unknown (senior titles are dropped)
+
+**Sources:** LinkedIn, Indeed, Glassdoor (each scraper runs independently; partial failures are logged)
+
+## Getting started
+
+### Prerequisites
+
+- Node.js 20+
+- A Supabase project
+- Playwright Chromium (`npx playwright install chromium`)
+
+### 1. Install
 
 ```bash
+git clone https://github.com/giovaniohira/job-board-agreggator.git
+cd job-board-agreggator
 npm install
 npx playwright install chromium
 ```
 
-### 2. Supabase project
+### 2. Supabase setup
 
 1. Create a project at [supabase.com](https://supabase.com)
-2. Run the migration in **SQL Editor**:
-
-   ```
-   supabase/migrations/001_initial_schema.sql
-   ```
-
-3. **Disable public sign-ups** in Supabase Dashboard:
-   - Authentication → Providers → Email → disable "Enable sign ups"
-
-4. **Create the single allowed user** in Authentication → Users → Add user:
-   - Email: `giovaniohira@gmail.com`
-   - Password: (your chosen password)
-
-5. Copy project URL and keys from Settings → API
+2. Run migrations in order via the SQL Editor:
+   - `supabase/migrations/001_initial_schema.sql`
+   - `supabase/migrations/002_cron_rpc_functions.sql`
+3. Disable public sign-ups (Auth → Providers → Email)
+4. Create your allowed user in Auth → Users
+5. Add the production site URL to Auth redirect URLs when deploying
 
 ### 3. Environment variables
 
@@ -57,15 +89,13 @@ npx playwright install chromium
 cp .env.example .env.local
 ```
 
-Fill in:
-
-| Variable | Description |
-|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon/public key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service role key (server-only, for scrapers) |
-| `ALLOWED_USER_EMAIL` | Only email allowed to access dashboard |
-| `CRON_SECRET` | Random secret (min 16 chars) for cron auth |
+| Variable | Required | Description |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Supabase anon key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Local only | Optional locally; cron uses RPC + anon key in production |
+| `ALLOWED_USER_EMAIL` | Yes | Only email allowed to sign in |
+| `CRON_SECRET` | Yes | Min 16 chars; Vercel sends `Authorization: Bearer <CRON_SECRET>` |
 
 ### 4. Run locally
 
@@ -73,112 +103,76 @@ Fill in:
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) → redirects to dashboard (login required).
+Open [http://localhost:3000](http://localhost:3000) — you'll be redirected to login, then the dashboard.
 
-### 5. Manual scrape (optional)
+### 5. Manual scrape
 
 ```bash
 npm run scrape
 ```
 
-Or hit the cron endpoint locally:
+Or call the cron route:
 
 ```bash
-curl -H "Authorization: Bearer YOUR_CRON_SECRET" http://localhost:3000/api/cron/scrape
+curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/scrape
 ```
 
----
+## Deployment (Vercel)
 
-## Vercel Deployment
-
-1. Push to GitHub and import in Vercel
-2. Add all environment variables from `.env.example`
-3. Set **CRON_SECRET** — Vercel sends `Authorization: Bearer <CRON_SECRET>` automatically
-4. Deploy
-
-Cron schedule is defined in `vercel.json`:
+1. Import the GitHub repo in Vercel
+2. Set all env vars from `.env.example` (use `--value` when adding `CRON_SECRET` to avoid trailing whitespace)
+3. Deploy — `postinstall` installs Playwright Chromium on the build machine
+4. Cron schedule lives in `vercel.json`:
 
 ```json
 {
-  "crons": [{ "path": "/api/cron/scrape", "schedule": "0 7,18 * * *" }]
+  "crons": [{ "path": "/api/cron/scrape", "schedule": "0 12 * * *" }]
 }
 ```
 
-**Note:** Playwright on Vercel requires `@sparticuz/chromium`. The scrape route has `maxDuration = 300` (5 min). You may need a Pro plan for long-running cron jobs.
+That runs **once per day at 12:00 UTC (9:00 AM Brazil time)**. Vercel Hobby allows one cron job per project.
 
----
+The scrape route sets `maxDuration = 300` and bundles Playwright assets via `outputFileTracingIncludes` in `next.config.ts`.
 
-## Scraping Architecture
-
-```
-/api/cron/scrape
-    └── ScrapingService.runAllScrapers()
-            ├── linkedinScraper.ts
-            ├── indeedScraper.ts
-            └── glassdoorScraper.ts
-                    └── BaseScraper (Playwright)
-                            └── upsert → jobs table (hash dedup)
-                            └── log → scraping_runs table
-```
-
-Each scraper:
-
-1. Iterates search keywords (software engineer, backend, full stack, etc.)
-2. Iterates locations (Brazil, Remote, Worldwide)
-3. Filters junior/mid seniority via title/location heuristics
-4. Extracts stack tags from title/keywords
-5. Returns normalized `ScrapedJob[]`
-
-**Deduplication:** `buildJobHash()` normalizes title, company, location, apply URL + source into a SHA-256 hash. Upsert uses `ON CONFLICT (hash)`.
-
-**Resilience:** Each scraper runs independently. Failures are logged; other scrapers continue. Run status: `completed`, `partial`, or `failed`.
-
----
-
-## Project Structure
+## Project structure
 
 ```
 src/
-├── actions/          # Server actions (auth, jobs)
+├── actions/           # Auth + job server actions
 ├── app/
-│   ├── api/cron/scrape/   # Cron endpoint
-│   ├── api/jobs/          # Jobs API for React Query
-│   ├── dashboard/         # Protected dashboard
+│   ├── api/cron/scrape/
+│   ├── api/jobs/
+│   ├── dashboard/
 │   └── login/
-├── components/
-│   ├── dashboard/    # Job cards, filters, list
-│   └── ui/           # shadcn-style primitives
-├── lib/              # Supabase clients, types, hashing
-├── repositories/     # Data access layer
-├── scrapers/         # Playwright scrapers
-└── services/         # Business logic
+├── components/        # Dashboard UI + shadcn-style primitives
+├── lib/               # Supabase clients, env, hashing, types
+├── repositories/      # Jobs + scraping runs data access
+├── scrapers/          # Playwright scrapers + pipeline filters
+└── services/          # Scraping orchestration
+supabase/migrations/   # Schema + cron RPC functions
+scripts/               # Manual scrape + deploy helpers
 ```
-
----
-
-## Known Limitations
-
-1. **Anti-bot protection** — LinkedIn, Indeed, and Glassdoor actively block automated scraping. Selectors may break without notice. CAPTCHAs and rate limits are common.
-2. **Vercel serverless** — Playwright + Chromium is heavy. Cold starts and timeouts can affect scrape reliability. Consider running scrapers on a dedicated worker for production.
-3. **No posted date parsing** — Many listings don't expose exact posted dates in search results; `posted_at` may be null.
-4. **Seniority inference** — Heuristic-based from title/location text; not 100% accurate.
-5. **Single user only** — Auth middleware + email check; not designed as multi-tenant SaaS.
-6. **English/Portuguese** — Scrapers accept both via `Accept-Language` header but don't filter by language explicitly.
-7. **Glassdoor/LinkedIn login walls** — Some results may require authenticated sessions not implemented in MVP.
-
----
 
 ## Scripts
 
 | Command | Description |
-|---|---|
-| `npm run dev` | Start dev server |
+| --- | --- |
+| `npm run dev` | Start development server |
 | `npm run build` | Production build |
+| `npm run start` | Start production server |
 | `npm run scrape` | Run all scrapers manually |
 | `npm run lint` | ESLint |
+| `npm run deploy:vercel` | Vercel SDK deploy helper |
 
----
+## Known limitations
+
+- Job boards actively block bots — selectors break, CAPTCHAs happen
+- Indeed and Glassdoor are less reliable than LinkedIn in practice
+- Seniority and remote type are inferred from text, not structured data
+- `posted_at` is often missing from search result pages
+- Single-user by design — not multi-tenant
+- One cron slot on Vercel Hobby (daily scrape only)
 
 ## License
 
-Private MVP — not for public distribution.
+Private MVP — not for public redistribution.
