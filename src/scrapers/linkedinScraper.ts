@@ -7,6 +7,7 @@ import {
   extractTags,
   inferRemoteType,
   inferSeniority,
+  isAllowedPipelineJob,
   isRelevantSeniority,
 } from "./utils";
 
@@ -24,6 +25,7 @@ export class LinkedInScraper extends BaseScraper {
         url.searchParams.set("location", location.query);
         url.searchParams.set("f_E", "2,3"); // entry + associate
         url.searchParams.set("f_TPR", "r604800"); // past week
+        url.searchParams.set("f_WT", "2"); // remote only
 
         try {
           await page.goto(url.toString(), {
@@ -62,6 +64,16 @@ export class LinkedInScraper extends BaseScraper {
             const seniority = inferSeniority(combined);
             if (!isRelevantSeniority(seniority)) continue;
 
+            const remoteType = inferRemoteType(combined);
+            if (
+              !isAllowedPipelineJob(
+                { title, location: locationText, remoteType },
+                location.country
+              )
+            ) {
+              continue;
+            }
+
             const key = `${title}|${company}|${applyUrl}`;
             if (seen.has(key)) continue;
             seen.add(key);
@@ -72,7 +84,7 @@ export class LinkedInScraper extends BaseScraper {
               title,
               company,
               location: locationText,
-              remoteType: inferRemoteType(`${locationText} ${title}`),
+              remoteType: "remote",
               seniority,
               description: undefined,
               salary: undefined,

@@ -72,7 +72,7 @@ export function JobFiltersBar() {
       <div className="space-y-1.5">
         <label className="text-xs font-medium text-zinc-400">Country / location</label>
         <Input
-          placeholder="Brazil, Remote..."
+          placeholder="United States, Canada, Brazil..."
           defaultValue={searchParams.get("country") ?? ""}
           onKeyDown={(e) => {
             if (e.key === "Enter") {

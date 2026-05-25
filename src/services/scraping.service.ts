@@ -3,6 +3,7 @@ import { scrapeLinkedIn } from "@/scrapers/linkedinScraper";
 import { scrapeIndeed } from "@/scrapers/indeedScraper";
 import { scrapeGlassdoor } from "@/scrapers/glassdoorScraper";
 import type { ScraperResult } from "@/scrapers/base-scraper";
+import { isAllowedPipelineJob } from "@/scrapers/utils";
 import { createAnonServiceClient } from "@/lib/supabase/admin";
 
 type ScrapeSummary = {
@@ -35,11 +36,13 @@ export class ScrapingService {
     for (const scraper of scrapers) {
       try {
         const result = await scraper.fn();
-        results.push(result);
-        totalFound += result.jobs.length;
+        const allowedJobs = result.jobs.filter((job) => isAllowedPipelineJob(job));
+        const filteredResult = { ...result, jobs: allowedJobs };
+        results.push(filteredResult);
+        totalFound += allowedJobs.length;
 
-        if (result.jobs.length > 0) {
-          const { inserted, updated } = await this.jobsRepo.upsertJobs(result.jobs);
+        if (allowedJobs.length > 0) {
+          const { inserted, updated } = await this.jobsRepo.upsertJobs(allowedJobs);
           totalInserted += inserted;
           totalUpdated += updated;
         }

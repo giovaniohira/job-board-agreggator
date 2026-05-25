@@ -7,6 +7,7 @@ import {
   extractTags,
   inferRemoteType,
   inferSeniority,
+  isAllowedPipelineJob,
   isRelevantSeniority,
 } from "./utils";
 
@@ -24,6 +25,7 @@ export class IndeedScraper extends BaseScraper {
         url.searchParams.set("l", location.query);
         url.searchParams.set("fromage", "7");
         url.searchParams.set("explvl", "ENTRY_LEVEL,MID_LEVEL");
+        url.searchParams.set("remotejob", "1");
 
         try {
           await page.goto(url.toString(), {
@@ -67,6 +69,16 @@ export class IndeedScraper extends BaseScraper {
             const seniority = inferSeniority(combined);
             if (!isRelevantSeniority(seniority)) continue;
 
+            const remoteType = inferRemoteType(combined);
+            if (
+              !isAllowedPipelineJob(
+                { title, location: locationText, remoteType },
+                location.country
+              )
+            ) {
+              continue;
+            }
+
             const key = `${title}|${company}|${applyUrl}`;
             if (seen.has(key)) continue;
             seen.add(key);
@@ -77,7 +89,7 @@ export class IndeedScraper extends BaseScraper {
               title,
               company,
               location: locationText,
-              remoteType: inferRemoteType(`${locationText} ${title}`),
+              remoteType: "remote",
               seniority,
               description: undefined,
               salary,

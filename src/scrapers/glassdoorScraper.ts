@@ -7,6 +7,7 @@ import {
   extractTags,
   inferRemoteType,
   inferSeniority,
+  isAllowedPipelineJob,
   isRelevantSeniority,
 } from "./utils";
 
@@ -21,7 +22,7 @@ export class GlassdoorScraper extends BaseScraper {
       for (const location of SEARCH_LOCATIONS) {
         const slug = encodeURIComponent(keyword);
         const locSlug = encodeURIComponent(location.query);
-        const url = `https://www.glassdoor.com/Job/jobs.htm?sc.keyword=${slug}&locT=N&locId=1&locKeyword=${locSlug}&fromAge=7`;
+        const url = `https://www.glassdoor.com/Job/jobs.htm?sc.keyword=${slug}&locT=N&locId=1&locKeyword=${locSlug}&fromAge=7&remoteWorkType=1`;
 
         try {
           await page.goto(url, {
@@ -64,6 +65,16 @@ export class GlassdoorScraper extends BaseScraper {
             const seniority = inferSeniority(combined);
             if (!isRelevantSeniority(seniority)) continue;
 
+            const remoteType = inferRemoteType(combined);
+            if (
+              !isAllowedPipelineJob(
+                { title, location: locationText, remoteType },
+                location.country
+              )
+            ) {
+              continue;
+            }
+
             const key = `${title}|${company}|${applyUrl}`;
             if (seen.has(key)) continue;
             seen.add(key);
@@ -74,7 +85,7 @@ export class GlassdoorScraper extends BaseScraper {
               title,
               company,
               location: locationText,
-              remoteType: inferRemoteType(`${locationText} ${title}`),
+              remoteType: "remote",
               seniority,
               description: undefined,
               salary,
