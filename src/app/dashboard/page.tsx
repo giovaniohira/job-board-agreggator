@@ -3,6 +3,7 @@ import { signOutAction } from "@/actions/auth.actions";
 import { JobFiltersBar } from "@/components/dashboard/job-filters";
 import { JobList } from "@/components/dashboard/job-list";
 import { JobListSkeleton } from "@/components/dashboard/job-list-skeleton";
+import { DashboardStats } from "@/components/dashboard/dashboard-stats";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { ScrapingRunsRepository } from "@/repositories/jobs.repository";
@@ -55,6 +56,10 @@ export default function DashboardPage() {
       </header>
 
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-6 md:px-6 md:py-8">
+        <Suspense fallback={null}>
+          <DashboardStats />
+        </Suspense>
+
         <section className="space-y-2">
           <h2 className="text-sm font-medium text-zinc-300">Filters</h2>
           <Suspense fallback={<JobListSkeleton />}>

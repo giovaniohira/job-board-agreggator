@@ -45,6 +45,20 @@ function mapRow(row: DbJobRow): Job {
   };
 }
 
+export type DashboardStats = {
+  totalJobs: number;
+  savedCount: number;
+  appliedCount: number;
+  bySource: Record<string, number>;
+};
+
+function countBySource(rows: Array<{ source: Job["source"] }>) {
+  return rows.reduce<Record<string, number>>((acc, row) => {
+    acc[row.source] = (acc[row.source] ?? 0) + 1;
+    return acc;
+  }, {});
+}
+
 export class JobsRepository {
   constructor(private supabase: SupabaseClient = createServiceClient()) {}
 
@@ -167,6 +181,52 @@ export class JobsRepository {
     if (error) {
       throw new Error(`Failed to update job: ${error.message}`);
     }
+  }
+
+  async getDashboardStats(userId: string): Promise<DashboardStats> {
+    const { count: totalJobs, error: totalError } = await this.supabase
+      .from("jobs")
+      .select("*", { count: "exact", head: true })
+      .eq("hidden", false);
+
+    if (totalError) {
+      throw new Error(`Failed to count jobs: ${totalError.message}`);
+    }
+
+    const { data: sourceRows, error: sourceError } = await this.supabase
+      .from("jobs")
+      .select("source")
+      .eq("hidden", false);
+
+    if (sourceError) {
+      throw new Error(`Failed to load job sources: ${sourceError.message}`);
+    }
+
+    const { count: appliedCount, error: appliedError } = await this.supabase
+      .from("jobs")
+      .select("*", { count: "exact", head: true })
+      .eq("hidden", false)
+      .eq("applied", true);
+
+    if (appliedError) {
+      throw new Error(`Failed to count applied jobs: ${appliedError.message}`);
+    }
+
+    const { count: savedCount, error: savedError } = await this.supabase
+      .from("saved_jobs")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId);
+
+    if (savedError) {
+      throw new Error(`Failed to count saved jobs: ${savedError.message}`);
+    }
+
+    return {
+      totalJobs: totalJobs ?? 0,
+      savedCount: savedCount ?? 0,
+      appliedCount: appliedCount ?? 0,
+      bySource: countBySource((sourceRows ?? []) as Array<{ source: Job["source"] }>),
+    };
   }
 }
 
