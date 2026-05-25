@@ -1,5 +1,4 @@
-import chromium from "@sparticuz/chromium";
-import { chromium as playwrightChromium, type Browser, type Page } from "playwright-core";
+import type { Browser, Page } from "playwright-core";
 import type { ScrapedJob } from "@/lib/types/job";
 
 export type ScraperResult = {
@@ -56,6 +55,12 @@ export abstract class BaseScraper {
     const isProduction = process.env.NODE_ENV === "production";
 
     if (isProduction) {
+      const [{ default: chromium }, { chromium: playwrightChromium }] =
+        await Promise.all([
+          import("@sparticuz/chromium"),
+          import("playwright-core"),
+        ]);
+
       return playwrightChromium.launch({
         args: chromium.args,
         executablePath: await chromium.executablePath(),
